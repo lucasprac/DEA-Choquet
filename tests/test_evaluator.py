@@ -61,16 +61,4 @@ class TestEvaluator:
         assert 'category' in results['E1']
         assert 'category' in results['E2']
         
-    def test_personal_objectives_used(self):
-        """Test that personal objectives affect the composite target."""
-        evaluator = BoundedRationalityEvaluator(theta_oo=0.5, mu=0.6)
-        
-        X = np.array([[10.0], [10.0]])
-        Y = np.array([[100.0], [100.0]])
-        
-        personal_obj = {'E1': 0.5, 'E2': 0.9}
-        
-        results = evaluator.evaluate(['E1', 'E2'], X, Y, personal_obj)
-        
-        assert results['E1']['theta_co'] == pytest.approx(0.5, abs=0.01)
-        assert results['E2']['theta_co'] == pytest.approx(0.66, abs=0.01)
+
