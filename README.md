@@ -1,26 +1,21 @@
-# DEA Bounded Rationality Engine
+# Choquet Integral DEA Engine
 
-A Python library implementing the **Cross-Efficiency Evaluation Method with Performance Level as a Management Objective in Consideration of Bounded Rationality**, based on the research by Shi, Wang & Zhang (2024).
+A Python library implementing the **Choquet Integral DEA Cross-Efficiency Evaluation Method**, based on the research by **Zhao & Gong (2023)**.
 
-This library provides a robust Data Envelopment Analysis (DEA) engine that accounts for:
-*   **Organizational Objectives**: Global targets set by management.
-*   **Personal Objectives**: Individual targets set by DMUs.
-*   **Bounded Rationality**: Uses **Prospect Theory** (gains/losses) to model the psychological value of performance relative to these objectives.
+This library replaces traditional linear DEA aggregation with a non-linear Choquet integral approach, capturing interactions between indicators and optimizing for stakeholder satisfaction.
 
-## Features
+## Key Features
 
-*   **CCR Model**: Classic self-efficiency evaluation.
-*   **Bounded Rationality Cross-Efficiency**:
-    *   Models 6 & 7: Organizational Objectives (Gain/Loss optimization).
-    *   Models 8 & 9: Personal Objectives (Gain/Loss optimization).
-*   **Composite Objectives**: Weighted combination of organizational and personal goals.
-*   **Prospect Theory Integration**: Configurable $\alpha, \beta, \lambda$ parameters for value functions.
-*   **Scipy Integration**: Uses `scipy.optimize.linprog` for reliable linear programming.
+*   **2-Additive Choquet Integral**: Models pairwise interactions (synergy or substitution) between input/output indicators.
+*   **DMU Satisfaction Optimization**: Selects weights that maximize the minimum satisfaction across all units (Fairness/Rawlsian principle).
+*   **Weight Balance Restrictions**: Prevents zero weights and excessive weight differences using the $\rho$ parameter.
+*   **Automatic Interaction Estimation**: Estimates synergy/substitution indices using empirical correlation analysis.
+*   **Ethical Frameworks**: Optimized for Fairness (Max-min satisfaction) to ensure results are accepted by all stakeholders.
 
 ## Installation
 
 ```bash
-C
+pip install pulp pandas scikit-learn numpy scipy
 ```
 
 ## Quick Start
@@ -29,46 +24,58 @@ C
 import numpy as np
 from dea_br import BoundedRationalityEvaluator
 
-# 1. Define Data (Inputs X, Outputs Y)
-# 3 DMUs, 1 Input, 1 Output
-X = np.array([[10], [20], [30]])
-Y = np.array([[100], [150], [200]])
+# 1. Define Data (5 DMUs, 3 Inputs, 2 Outputs)
+inputs = np.array([
+    [7, 7, 7],
+    [5, 9, 7],
+    [4, 6, 5],
+    [5, 9, 8],
+    [6, 8, 5]
+], dtype=float)
 
-# 2. Define Objectives (Organizational & Personal)
-theta_oo = 0.8  # Organizational Objective (0-1)
-theta_po = {0: 0.9, 1: 0.8, 2: 0.7} # Personal Objectives per DMU ID
+outputs = np.array([
+    [4, 4],
+    [7, 7],
+    [5, 7],
+    [6, 2],
+    [3, 6]
+], dtype=float)
 
-# 3. Initialize Evaluator
-evaluator = BoundedRationalityEvaluator(
-    theta_oo=theta_oo,
-    mu=0.6,          # 60% weight to Organizational Objective
-    alpha=0.88,      # Prospect Theory parameters
-    beta=0.88,
-    lambda_=2.25
-)
+dmu_ids = ["A", "B", "C", "D", "E"]
 
-# 4. Run Evaluation
+# 2. Initialize Evaluator
+# rho=0.5: Balance between weight flexibility and dispersion
+evaluator = BoundedRationalityEvaluator(rho=0.5, ethical_principle='fairness')
+
+# 3. Run Evaluation
 results = evaluator.evaluate(
-    dmu_ids=[0, 1, 2],
-    inputs=X,
-    outputs=Y,
-    personal_objectives=theta_po
+    dmu_ids=dmu_ids,
+    inputs=inputs,
+    outputs=outputs
 )
 
-# 5. Inspect Results
+# 4. Inspect Results
 for dmu_id, res in results.items():
-    print(f"DMU {dmu_id}: Score={res['composite_score']:.4f} Rank={res['rank']}")
+    print(f"DMU {dmu_id}: Rank={res['rank']} Score={res['cross_efficiency']:.4f} Satisfaction={res['satisfaction']:.4f}")
 ```
 
-## Mathematical Models
+## Methodology Overview
 
-This library implements the following models from [Shi et al. (2024)](https://doi.org/10.1007/s44196-024-00650-1):
+The evaluation follows a 3-step hierarchical optimization:
 
-*   **Model (2)**: CCR Self-Efficiency.
-*   **Model (6)**: Cross-efficiency minimizing gain relative to Organizational Objective.
-*   **Model (7)**: Cross-efficiency maximizing loss relative to Organizational Objective.
-*   **Model (8)**: Cross-efficiency minimizing gain relative to Personal Objective.
-*   **Model (9)**: Cross-efficiency maximizing loss relative to Personal Objective.
+1.  **Optimal Self-Evaluation (2-CHCCR)**: Calculates maximum self-efficiency for each DMU using Choquet aggregation and weight balance constraints.
+2.  **Target Computation**: Determines the ideal (Benevolent) and non-ideal (Aggressive) cross-efficiency boundaries for every pair of DMUs.
+3.  **Satisfaction Optimization**: Searches for the "Fair" weight profile that maximizes the satisfaction of the least-satisfied DMU relative to its targets.
+
+### The $\rho$ Parameter
+The `rho` parameter (range $(0, 1]$) controls how much weights are allowed to differ. 
+- Higher $\rho$ (e.g., 0.7) forces more balanced importance across indicators.
+- Lower $\rho$ (e.g., 0.1) allows the model to specialize weights to highlight specific strengths.
+
+## Mathematical Reference
+
+This library implements the models from:
+> **Zhao, Y., & Gong, Z. (2023).** *On a Choquet Integral DEA Cross-Efficiency Evaluation Method Involving the Satisfaction of Decision-Making Units and Weight Balance of Indicators.* International Journal of Computational Intelligence Systems. [DOI: 10.1007/s44196-023-00204-x](https://doi.org/10.1007/s44196-023-00204-x)
 
 ## License
 
