@@ -1,9 +1,11 @@
 from .evaluator import BoundedRationalityEvaluator
-from .choquet import run_choquet_evaluation
+from .ccr_model import solve_ccr
+from .cross_efficiency import calculate_cross_efficiency_matrix
 
 __version__ = "0.1.0"
 
 __all__ = [
     "BoundedRationalityEvaluator",
-    "run_choquet_evaluation",
+    "solve_ccr",
+    "calculate_cross_efficiency_matrix",
 ]

@@ -1,31 +1,31 @@
 import numpy as np
 from typing import Dict, List, Any, Optional
-from .choquet import DMU, run_choquet_evaluation, normalize_data
+from .cross_efficiency import calculate_cross_efficiency_matrix
+from .prospect_theory import DEFAULT_ALPHA, DEFAULT_BETA, DEFAULT_LAMBDA
 
 class BoundedRationalityEvaluator:
     def __init__(
         self,
-        rho: float = 0.5,
-        ethical_principle: str = 'fairness',
-        # Deprecated/Ignored params kept for compatibility
         theta_oo: float = 0.7,
         mu: float = 0.6,
-        alpha: float = 0.88,
-        beta: float = 0.88,
-        lambda_: float = 2.25
+        alpha: float = DEFAULT_ALPHA,
+        beta: float = DEFAULT_BETA,
+        lambda_: float = DEFAULT_LAMBDA
     ):
         """
-        Main runner for DEA Choquet Integral Evaluation.
+        Main runner for DEA Bounded Rationality Evaluation.
         
         Args:
-            rho: Weight balance parameter (0, 1].
-            ethical_principle: 'fairness', 'utilitarianism', or 'equity'.
-            theta_oo, mu, alpha, beta, lambda_: Ignored (Legacy params).
+            theta_oo: Organizational Objective (Global Reference Point).
+            mu: Weight for Organizational Objective in Composite calculation.
+                (1 - mu) is used for Personal Objective.
+            alpha, beta, lambda_: Prospect Theory parameters.
         """
-        self.rho = rho
-        self.ethical_principle = ethical_principle
-        # Legacy
-        self.theta_oo = theta_oo 
+        self.theta_oo = theta_oo
+        self.mu = mu
+        self.alpha = alpha
+        self.beta = beta
+        self.lambda_ = lambda_
         
     def evaluate(
         self,
@@ -35,53 +35,65 @@ class BoundedRationalityEvaluator:
         personal_objectives: Optional[Dict[Any, float]] = None
     ) -> Dict[Any, Dict[str, Any]]:
         """
-        Run the Choquet DEA evaluation pipeline.
+        Run the evaluation pipeline.
         
         Args:
             dmu_ids: List of identifiers for DMUs.
             inputs: N x M array.
             outputs: N x S array.
-            personal_objectives: Ignored in this methodology (kept for API compat).
-                                 Choquet methodology focuses on Satisfaction/Fairness.
+            personal_objectives: Dict mapping dmu_id to their personal target.
+                                 If None, defaults to theta_oo for everyone (pure OO).
                                  
         Returns:
-            Dict mapping dmu_id to result dict.
+            Dict mapping dmu_id to result dict containing:
+            - ccr_efficiency
+            - cross_efficiency (The final score)
+            - rank
+            - category
         """
         # Validate data
         if len(dmu_ids) != inputs.shape[0] or len(dmu_ids) != outputs.shape[0]:
             raise ValueError("Size mismatch between DMU IDs and Data matrices")
             
-        # 1. Create DMU objects
-        data_dmus = []
-        for i, d_id in enumerate(dmu_ids):
-            # Create fresh copy of arrays
-            d = DMU(
-                name=str(d_id),
-                inputs=inputs[i].astype(float).copy(),
-                outputs=outputs[i].astype(float).copy()
-            )
-            data_dmus.append(d)
-            
-        # 2. Normalize Data
-        # Choquet method usually requires normalization to [0,1] for comparability
-        data_dmus = normalize_data(data_dmus)
+        # 1. Calculate Composite Objectives
+        # Theta^CO = Theta^OO * mu + Theta^PO * (1-mu)
+        theta_limits = {}
         
-        # 3. Run Pipeline
-        final_scores, E_max, E_min = run_choquet_evaluation(data_dmus, rho=self.rho)
+        for i, dmu_id in enumerate(dmu_ids):
+            theta_po = self.theta_oo # Default
+            if personal_objectives and dmu_id in personal_objectives:
+                theta_po = personal_objectives[dmu_id]
+            
+            # Formula Eq 197
+            theta_co = (self.theta_oo * self.mu) + (theta_po * (1.0 - self.mu))
+            theta_limits[i] = theta_co
+            
+        # 2. Run Cross-Efficiency Matrix Calculation
+        matrix, self_effs = calculate_cross_efficiency_matrix(
+            X=inputs,
+            Y=outputs,
+            theta_limits=theta_limits,
+            alpha=self.alpha,
+            beta=self.beta,
+            lambda_=self.lambda_
+        )
+        
+        # 3. Calculate Average Cross-Efficiency (Final Score)
+        # Axis 1 = Mean of Row (How J is evaluated by all K)
+        avg_scores = np.mean(matrix, axis=1)
         
         # 4. Prepare Results & Ranking
         results = {}
         
-        # Combine into list for sorting
+        # Create list for sorting
         ranked_list = []
-        for i, d_id in enumerate(dmu_ids):
+        for i, dmu_id in enumerate(dmu_ids):
             rec = {
-                'id': d_id,
-                'ccr_efficiency': float(data_dmus[i].efficiency_ccr if data_dmus[i].efficiency_ccr else 0.0),
-                'cross_efficiency': float(final_scores[i]),
-                'composite_score': float(final_scores[i]), 
-                'satisfaction': float(data_dmus[i].satisfaction if data_dmus[i].satisfaction else 0.0),
-                'theta_co': 0.0 # Legacy field
+                'id': dmu_id,
+                'ccr_efficiency': float(self_effs[i]),
+                'cross_efficiency': float(avg_scores[i]),
+                'composite_score': float(avg_scores[i]), # For compatibility (Paper calls it cross eff)
+                'theta_co': float(theta_limits[i])
             }
             ranked_list.append(rec)
             
@@ -93,7 +105,7 @@ class BoundedRationalityEvaluator:
         for rank, item in enumerate(ranked_list, 1):
             item['rank'] = rank
             
-            # Percentile-based categorization
+            # Percentile-based categorization (as per platform spec)
             percentile = (rank / n) * 100
             if percentile <= 5:
                 category = 'Exceptional'
