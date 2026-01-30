@@ -1,0 +1,195 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Performance Evaluation Platform Design System */
+    --background: 48 100% 97%; /* #FFFAF0 Cream */
+    --foreground: 168 4% 16%; /* #262828 Charcoal */
+    --card: 0 0% 100%;
+    --card-foreground: 168 4% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 168 4% 16%;
+    --primary: 168 4% 16%;
+    --primary-foreground: 48 100% 97%;
+    --secondary: 210 11% 44%; /* #626C7C Slate */
+    --secondary-foreground: 48 100% 97%;
+    --muted: 48 60% 94%;
+    --muted-foreground: 210 11% 44%;
+    --accent: 54 100% 89%; /* #FFF9C4 Light Yellow */
+    --accent-foreground: 168 4% 16%;
+    --destructive: 352 82% 42%; /* #C0152F Red */
+    --destructive-foreground: 0 0% 100%;
+    --border: 48 30% 88%;
+    --input: 48 30% 88%;
+    --ring: 168 4% 16%;
+    --radius: 0.5rem;
+    
+    /* Custom Platform Colors */
+    --success: 180 63% 33%; /* #208C8D Teal */
+    --warning: 18 55% 42%; /* #A84D2F Orange */
+    --info: 195 67% 39%; /* #2181A4 Info Blue */
+    --yellow-accent: 54 100% 89%; /* #FFF9C4 */
+    --cream: 48 100% 97%; /* #FFFAF0 */
+    --charcoal: 168 4% 16%; /* #262828 */
+    --slate: 210 11% 44%; /* #626C7C */
+    
+    /* Sidebar */
+    --sidebar-background: 48 100% 97%;
+    --sidebar-foreground: 168 4% 16%;
+    --sidebar-primary: 168 4% 16%;
+    --sidebar-primary-foreground: 48 100% 97%;
+    --sidebar-accent: 54 100% 89%;
+    --sidebar-accent-foreground: 168 4% 16%;
+    --sidebar-border: 48 30% 88%;
+    --sidebar-ring: 168 4% 16%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer components {
+  /* Status Badge Styles */
+  .badge-success {
+    @apply bg-[#208C8D]/10 text-[#208C8D] border-[#208C8D]/20;
+  }
+  
+  .badge-warning {
+    @apply bg-[#A84D2F]/10 text-[#A84D2F] border-[#A84D2F]/20;
+  }
+  
+  .badge-error {
+    @apply bg-[#C0152F]/10 text-[#C0152F] border-[#C0152F]/20;
+  }
+  
+  .badge-info {
+    @apply bg-[#2181A4]/10 text-[#2181A4] border-[#2181A4]/20;
+  }
+  
+  .badge-neutral {
+    @apply bg-gray-100 text-gray-600 border-gray-200;
+  }
+  
+  /* KPI Card Styles */
+  .kpi-card {
+    @apply bg-white rounded-lg border border-[#e5e5e5] p-6 shadow-sm;
+  }
+  
+  /* Page Header */
+  .page-header {
+    @apply flex items-center justify-between mb-6;
+  }
+  
+  .page-title {
+    @apply text-2xl font-semibold text-[#262828];
+  }
+  
+  /* Table Styles */
+  .data-table {
+    @apply w-full border-collapse;
+  }
+  
+  .data-table th {
+    @apply text-left py-3 px-4 text-sm font-medium text-[#626C7C] border-b border-[#e5e5e5] bg-[#fafafa];
+  }
+  
+  .data-table td {
+    @apply py-3 px-4 text-sm text-[#262828] border-b border-[#e5e5e5];
+  }
+  
+  .data-table tr:hover td {
+    @apply bg-[#FFFAF0]/50;
+  }
+  
+  /* Form Styles */
+  .form-label {
+    @apply block text-sm font-medium text-[#262828] mb-1.5;
+  }
+  
+  .form-input {
+    @apply w-full px-3 py-2 border border-[#e5e5e5] rounded-md text-sm 
+           focus:outline-none focus:ring-2 focus:ring-[#262828]/10 focus:border-[#262828]
+           placeholder:text-[#626C7C]/50;
+  }
+  
+  /* Button Styles */
+  .btn-primary {
+    @apply bg-[#FFF9C4] text-[#262828] px-4 py-2 rounded-md text-sm font-medium
+           hover:bg-[#FFF59D] transition-colors border border-[#F9A825]/20;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-[#262828] px-4 py-2 rounded-md text-sm font-medium
+           hover:bg-gray-50 transition-colors border border-[#e5e5e5];
+  }
+  
+  .btn-danger {
+    @apply bg-[#C0152F] text-white px-4 py-2 rounded-md text-sm font-medium
+           hover:bg-[#a01229] transition-colors;
+  }
+  
+  /* Sidebar Navigation */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-2.5 text-sm text-[#626C7C] rounded-md
+           hover:bg-[#FFF9C4]/50 hover:text-[#262828] transition-colors cursor-pointer;
+  }
+  
+  .nav-item.active {
+    @apply bg-[#FFF9C4] text-[#262828] font-medium;
+  }
+  
+  /* Wizard Step Indicator */
+  .wizard-step {
+    @apply flex items-center gap-2;
+  }
+  
+  .wizard-step-number {
+    @apply w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
+           bg-gray-100 text-gray-500;
+  }
+  
+  .wizard-step.active .wizard-step-number {
+    @apply bg-[#262828] text-white;
+  }
+  
+  .wizard-step.completed .wizard-step-number {
+    @apply bg-[#208C8D] text-white;
+  }
+  
+  /* Card Styles */
+  .platform-card {
+    @apply bg-white rounded-lg border border-[#e5e5e5] overflow-hidden;
+  }
+  
+  .platform-card-header {
+    @apply px-6 py-4 border-b border-[#e5e5e5] bg-[#fafafa];
+  }
+  
+  .platform-card-title {
+    @apply text-lg font-semibold text-[#262828];
+  }
+  
+  .platform-card-content {
+    @apply p-6;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

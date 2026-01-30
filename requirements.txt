@@ -1,0 +1,6 @@
+polars
+pulp
+xlsx2csv
+openpyxl
+numpy
+pytest
