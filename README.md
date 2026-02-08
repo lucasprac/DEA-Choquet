@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Hybrid Performance Evaluation Model (DEA-Choquet)
 
 This project implements a multidimensional sales performance evaluation method combining **DEA-Choquet Cross-Efficiency** (Operational Efficiency) and **Effectiveness Matrices** (Financial Results).
